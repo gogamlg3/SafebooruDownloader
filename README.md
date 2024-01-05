@@ -15,7 +15,7 @@ Example:
 
 Download only first page and save files in to "save" folder
 ```
-# python download.py "https://safebooru.org/index.php?page=post&s=list&tags=makise_kurisu" 1 1 save
+# python download.py "https://safebooru.org/index.php?page=post&s=list&tags=makise_kurisu" 1 1 -d save
 ```
 
 Download first and second page

@@ -1,22 +1,24 @@
 from bs4 import BeautifulSoup
 import requests
 import wget
+import argparse
 import sys
 import os
 
-if len(sys.argv) == 5:
-    try:
-        os.mkdir(sys.argv[4])
+parser = argparse.ArgumentParser()
+parser.add_argument('url', type=str, help='url from safebooru')
+parser.add_argument('first_page', type=int, help='first page')
+parser.add_argument('last_page', type=int, help='last page')
+parser.add_argument('-d', '--directory', type=str, default='images', help='download path')
+args = parser.parse_args()
 
-    except:
-        pass
+os.makedirs(args.directory, exist_ok=True) 
 
 def get_thumbs(pid):
-    if sys.argv[1][-5:] == 'pid=0':
-        url = f'{sys.argv[1][0:-6]}&pid={pid}'
-
+    if args.url[-5:] == 'pid=0':
+        url = f'{args.url[0:-6]}&pid={pid}'
     else:
-        url = f'{sys.argv[1]}&pid={pid}'
+        url = f'{args.url}&pid={pid}'
 
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
@@ -24,12 +26,17 @@ def get_thumbs(pid):
 
     if images == 0:
         get_thumbs(pid)
-
     else:
         return images
 
-pid = int(sys.argv[2]) * 40 - 40
-last_pid = int(sys.argv[3]) * 40 - 40
+def download(original_href, output_path, img_id, file_extension):
+    global images_count
+    wget.download(original_href, out=output_path, bar=None)
+    print(f"downloaded: {img_id}.{file_extension}")
+    images_count += 1
+
+pid = args.first_page * 40 - 40
+last_pid = args.last_page * 40 - 40
 images_count = 0
 
 while pid <= last_pid:
@@ -44,15 +51,10 @@ while pid <= last_pid:
 
         if original_href[-3:] == 'peg':
             file_extension = original_href[-4:]
-
         else:
             file_extension = original_href[-3:]
 
-        if len(sys.argv) == 5:
-            output_path = f'{sys.argv[4]}/{img_id}.{file_extension}'
- 
-        else:
-            output_path = f'{img_id}.{file_extension}'
+        output_path = f'{args.directory}/{img_id}.{file_extension}'
 
         try:
             if os.path.isfile(output_path) == False:
@@ -67,4 +69,4 @@ while pid <= last_pid:
 
     pid += 40
 
-print(f'Successfully downloaded {images_count} files')
+print(f'Successfully downloaded {images_count} images')
