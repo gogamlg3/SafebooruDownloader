@@ -4,6 +4,7 @@ import wget
 import argparse
 import sys
 import os
+import re
 
 parser = argparse.ArgumentParser()
 parser.add_argument('url', type=str, help='url from safebooru')
@@ -35,7 +36,7 @@ def get_thumbs(pid):  # получение tuple состоящий из мас�
 
     return (images, site)
 
-def download(original_href, output_path, img_id, file_extension):
+def download_1(original_href, output_path, img_id, file_extension):
     global images_count
     wget.download(original_href, out=output_path, bar=None)
     print(f"downloaded: {img_id}.{file_extension}")
@@ -45,17 +46,26 @@ pid = args.first_page * 40 - 40
 last_pid = args.last_page * 40 - 40
 images_count = 0
 
+
+
 while pid <= last_pid:
     images, site = get_thumbs(pid)
 
     for image in images:
         img_id = image.get('id')[1:]
-        url = f'https://{site}/index.php?page=post&s=view&id={img_id}'
+        url = f"https://{site}/index.php?page=post&s=view&id={img_id}"
         page = requests.get(url)
         soup = BeautifulSoup(page.text, "html.parser")
-        original_href = soup.findAll('li', string='Original image')[0].select('a[href]')[0].get('href')
         
-        file_extension = ''
+        li_list = soup.findAll('li')
+        
+        for i in li_list:
+            if re.search("Original", i.get_text()) != None:
+                original_href = i.select('a[href]')[0].get('href')
+                break
+        
+        file_extension = ""
+        original_href = original_href.split("?")[0]
         for i in range(len(original_href)-1, 0, -1):
             if original_href[i] != '.':
                 file_extension += original_href[i]
@@ -63,18 +73,15 @@ while pid <= last_pid:
                 file_extension = file_extension[::-1]
                 break
 
-        output_path = f'{args.directory}/{img_id}.{file_extension}'
+        output_path = f"{args.directory}/{img_id}.{file_extension}"
 
-        try:
-            if os.path.isfile(output_path) == False:
-                wget.download(original_href, out=output_path, bar=None)
-                print(f"downloaded: {img_id}.{file_extension}")
-                images_count += 1
-            else:
-                print(f'{img_id}.{file_extension} is already downloaded')
+        if os.path.isfile(output_path) == False:
+            wget.download(original_href, out=output_path, bar=None)
+            print(f"downloaded: {img_id}.{file_extension}")
+            images_count += 1
+        else:
+            print(f'{img_id}.{file_extension} is already downloaded')
 
-        except Exception as e:
-            print(f"error: {e}")
 
     pid += 40
 
