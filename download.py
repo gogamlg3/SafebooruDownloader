@@ -20,6 +20,7 @@ os.makedirs(args.directory, exist_ok=True)
 pid = args.first_page * 42 - 42
 last_pid = args.last_page * 42 - 42
 images_count = 0
+site = args.url.split("//")[1].split("/")[0]
 
 def timer(time_format='s', out_string="Время выполнения:"): # декоратор для замерки времени работы функций
     def decorator(func):
@@ -59,7 +60,7 @@ def get_thumbs(pid):  # получение tuple состоящий из мас�
 def download_image(image):
     img_id = image.get('id')[1:]
     global images_count
-    url = f"https://safebooru.org/index.php?page=post&s=view&id={img_id}"
+    url = f"https://{site}/index.php?page=post&s=view&id={img_id}"
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
         
@@ -97,7 +98,7 @@ while pid <= last_pid:
 
     for t in threads:
         t.start()
-        sleep(0.2)
+        sleep(0.25)
         
     for t in threads:
         t.join()
